@@ -92,28 +92,41 @@ echo "Done. FastQC: $OUT/fastqc ; Kraken reports: $OUT/kraken ; MultiQC: $OUT/mu
 
 ### Trimming
 ```
-conda activate trimgalore
-for r1 in *_1.fq.gz *_R1.fq.gz; do
-    # Skip if the file doesn't exist (in case the pattern doesn't match anything)
+for r1 in \
+    *_R1.fastq.gz *_R1_001.fastq.gz \
+    *_R1.fq.gz    *_1.fastq.gz \
+    *_1.fq.gz
+do
+    # Skip if the glob expanded to nothing
     [[ -f "$r1" ]] || continue
 
-    if [[ "$r1" == *_1.fq.gz ]]; then
-        base=$(basename "$r1" _1.fq.gz)
-        r2="${base}_2.fq.gz"
-    elif [[ "$r1" == *_R1.fq.gz ]]; then
-        base=$(basename "$r1" _R1.fq.gz)
-        r2="${base}_R2.fq.gz"
+    # Derive the R2 mate based on the detected pattern
+    if   [[ "$r1" == *_R1.fastq.gz ]];      then r2="${r1/_R1.fastq.gz/_R2.fastq.gz}"
+    elif [[ "$r1" == *_R1_001.fastq.gz ]];  then r2="${r1/_R1_001.fastq.gz/_R2_001.fastq.gz}"
+    elif [[ "$r1" == *_R1.fq.gz ]];         then r2="${r1/_R1.fq.gz/_R2.fq.gz}"
+    elif [[ "$r1" == *_1.fastq.gz ]];       then r2="${r1/_1.fastq.gz/_2.fastq.gz}"
+    elif [[ "$r1" == *_1.fq.gz ]];          then r2="${r1/_1.fq.gz/_2.fq.gz}"
     else
-        echo "Skipping unrecognized file format: $r1"
+        echo "Skipping unrecognized file: $r1"
         continue
     fi
 
     if [[ -f "$r2" ]]; then
-        echo "Trimming $base"
-        trim_galore --paired "$r1" "$r2"
+        # Sample label (strip the R1 marker and extension variations)
+        sample="$(basename "$r1" | sed -E 's/(_R1(_001)?|_1)\.f(ast)?q\.gz$//')"
+        echo "Trimming $sample"
+        trim_galore --paired --fastqc -o trimmed "$r1" "$r2"
     else
-        echo "Warning: Missing R2 for $base"
+        echo "Warning: missing R2 mate for: $r1"
     fi
 done
+
 conda deactivate
 ```
+
+
+
+
+
+
+
