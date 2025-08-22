@@ -37,19 +37,19 @@ done < biosamples.txt``
 
 ### run fastqc and kraken2
 ```
-# 0) activate your tools
+#### 0) activate your tools
 conda activate kraken2
 
-# 1) set paths & threads
+#### 1) set paths & threads
 READS_DIR="/home/britto/data/Sam/Serratia/all_raw/trimmed"
 DB="/home/britto/reference_database/refseq_kraken"
 THREADS=8
 OUT="work"
 
-# 2) create output folders
+#### 2) create output folders
 mkdir -p "$OUT/fastqc" "$OUT/kraken" "$OUT/multiqc"
 
-# 3) loop over all R1 files (supports .fq.gz and .fastq.gz)
+#### 3) loop over all R1 files (supports .fq.gz and .fastq.gz)
 shopt -s nullglob
 for r1 in "$READS_DIR"/*_1_val_1.fq.gz "$READS_DIR"/*_1_val_1.fastq.gz; do
   [ -e "$r1" ] || continue  # skip if no matches
@@ -78,7 +78,7 @@ for r1 in "$READS_DIR"/*_1_val_1.fq.gz "$READS_DIR"/*_1_val_1.fastq.gz; do
           --report "$OUT/kraken/${sample}.report"
 done
 
-# 4) MultiQC summary
+#### 4) MultiQC summary
 multiqc "$OUT" -o "$OUT/multiqc"
 
 echo "Done. FastQC: $OUT/fastqc ; Kraken reports: $OUT/kraken ; MultiQC: $OUT/multiqc"
