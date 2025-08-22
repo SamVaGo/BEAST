@@ -89,3 +89,31 @@ multiqc "$OUT" -o "$OUT/multiqc"
 
 echo "Done. FastQC: $OUT/fastqc ; Kraken reports: $OUT/kraken ; MultiQC: $OUT/multiqc"
 ```
+
+### Trimming
+```
+conda activate trimgalore
+for r1 in *_1.fq.gz *_R1.fq.gz; do
+    # Skip if the file doesn't exist (in case the pattern doesn't match anything)
+    [[ -f "$r1" ]] || continue
+
+    if [[ "$r1" == *_1.fq.gz ]]; then
+        base=$(basename "$r1" _1.fq.gz)
+        r2="${base}_2.fq.gz"
+    elif [[ "$r1" == *_R1.fq.gz ]]; then
+        base=$(basename "$r1" _R1.fq.gz)
+        r2="${base}_R2.fq.gz"
+    else
+        echo "Skipping unrecognized file format: $r1"
+        continue
+    fi
+
+    if [[ -f "$r2" ]]; then
+        echo "Trimming $base"
+        trim_galore --paired "$r1" "$r2"
+    else
+        echo "Warning: Missing R2 for $base"
+    fi
+done
+conda deactivate
+```
