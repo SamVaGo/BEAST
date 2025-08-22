@@ -92,6 +92,7 @@ echo "Done. FastQC: $OUT/fastqc ; Kraken reports: $OUT/kraken ; MultiQC: $OUT/mu
 
 ### Trimming
 ```
+conda activate trimgalore
 for r1 in \
     *_R1.fastq.gz *_R1_001.fastq.gz \
     *_R1.fq.gz    *_1.fastq.gz \
