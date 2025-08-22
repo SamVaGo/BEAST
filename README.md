@@ -33,7 +33,7 @@ while read BS; do
   curl -s "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=${BS}&result=sample&format=tsv&fields=sample_accession,scientific_name,collection_date,country,host,isolation_source,first_public" \
   | sed '1d' >> biosample_meta.tsv
 done < biosamples.txt``
-
+```
 
 ### run fastqc and kraken2
 ```
