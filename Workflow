@@ -1,4 +1,4 @@
-Download raw reads from ENA by bioproject and species name
+### Download raw reads from ENA by bioproject and species name
 
 ```
 curl -sG 'https://www.ebi.ac.uk/ena/portal/api/search' \
@@ -13,4 +13,51 @@ cut -f3 runs.tsv | tail -n +2 | tr ';' '\n' | while read url; do
 done
 ```
 
+### run fastqc and kraken2
+```
+# 0) activate your tools
+conda activate kraken2
 
+# 1) set paths & threads
+READS_DIR="/home/britto/data/Sam/Serratia/all_raw/trimmed"
+DB="/home/britto/reference_database/refseq_kraken"
+THREADS=8
+OUT="work"
+
+# 2) create output folders
+mkdir -p "$OUT/fastqc" "$OUT/kraken" "$OUT/multiqc"
+
+# 3) loop over all R1 files (supports .fq.gz and .fastq.gz)
+shopt -s nullglob
+for r1 in "$READS_DIR"/*_1_val_1.fq.gz "$READS_DIR"/*_1_val_1.fastq.gz; do
+  [ -e "$r1" ] || continue  # skip if no matches
+
+  # figure out extension and sample name
+  if [[ "$r1" == *.fastq.gz ]]; then
+    ext=".fastq.gz"
+  else
+    ext=".fq.gz"
+  fi
+  sample=$(basename "${r1%_1_val_1$ext}")
+  r2="$READS_DIR/${sample}_2_val_2$ext"
+
+  if [[ ! -f "$r2" ]]; then
+    echo "!! Missing mate for $sample: $r2" >&2
+    continue
+  fi
+
+  echo "==> $sample"
+  # FastQC
+  fastqc --quiet -t "$THREADS" -o "$OUT/fastqc" "$r1" "$r2"
+
+  # Kraken2 (report only)
+  kraken2 --db "$DB" --threads "$THREADS" \
+          --paired "$r1" "$r2" \
+          --report "$OUT/kraken/${sample}.report"
+done
+
+# 4) MultiQC summary
+multiqc "$OUT" -o "$OUT/multiqc"
+
+echo "Done. FastQC: $OUT/fastqc ; Kraken reports: $OUT/kraken ; MultiQC: $OUT/multiqc"
+```
