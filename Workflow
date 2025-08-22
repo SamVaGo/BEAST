@@ -1,6 +1,6 @@
 Download raw reads from ENA by bioproject and species name
 
-````
+```
 curl -sG 'https://www.ebi.ac.uk/ena/portal/api/search' \
   --data-urlencode "result=read_run" \
   --data-urlencode 'query=study_accession=PRJEB5065 AND scientific_name="Serratia marcescens"' \
@@ -11,6 +11,6 @@ curl -sG 'https://www.ebi.ac.uk/ena/portal/api/search' \
 cut -f3 runs.tsv | tail -n +2 | tr ';' '\n' | while read url; do
   wget "ftp://$url"
 done
-````
+```
 
 
