@@ -1,0 +1,85 @@
+### Download raw reads from ENA by bioproject and species name
+
+```
+curl -sG 'https://www.ebi.ac.uk/ena/portal/api/search' \
+  --data-urlencode "result=read_run" \
+  --data-urlencode 'query=study_accession=PRJEB5065 AND scientific_name="Serratia marcescens"' \
+  --data-urlencode "fields=run_accession,scientific_name,fastq_ftp" \
+  --data-urlencode "format=tsv" \
+  > runs.tsv
+
+cut -f3 runs.tsv | tail -n +2 | tr ';' '\n' | while read url; do
+  wget "ftp://$url"
+done
+```
+
+### Get metadata
+```
+# 1) Convert Excel to CSV (keeps your header)
+xlsx2csv -d tab Map1.xlsx Map1.tsv
+
+# 2) Pull unique BioSamples
+awk -F'\t' 'NR>1{print $2}' Map1.tsv | sort -u > biosamples.txt
+# (Assumes header is: run_accession  sample_accession  experiment_accession  study_accession)
+
+# show what you’ll loop over
+nl -ba biosamples.txt
+# normalize line endings & trim whitespace just in case
+tr -d '\r' < biosamples.txt | sed 's/[[:space:]]\+$//' | awk 'NF' > biosamples.clean.txt
+mv biosamples.clean.txt biosamples.txt
+
+printf "biosample_accession\tscientific_name\tcollection_date\tcountry\thost\tisolation_source\tfirst_public\n" > biosample_meta.tsv
+while read BS; do
+  curl -s "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=${BS}&result=sample&format=tsv&fields=sample_accession,scientific_name,collection_date,country,host,isolation_source,first_public" \
+  | sed '1d' >> biosample_meta.tsv
+done < biosamples.txt``
+
+
+### run fastqc and kraken2
+```
+# 0) activate your tools
+conda activate kraken2
+
+# 1) set paths & threads
+READS_DIR="/home/britto/data/Sam/Serratia/all_raw/trimmed"
+DB="/home/britto/reference_database/refseq_kraken"
+THREADS=8
+OUT="work"
+
+# 2) create output folders
+mkdir -p "$OUT/fastqc" "$OUT/kraken" "$OUT/multiqc"
+
+# 3) loop over all R1 files (supports .fq.gz and .fastq.gz)
+shopt -s nullglob
+for r1 in "$READS_DIR"/*_1_val_1.fq.gz "$READS_DIR"/*_1_val_1.fastq.gz; do
+  [ -e "$r1" ] || continue  # skip if no matches
+
+  # figure out extension and sample name
+  if [[ "$r1" == *.fastq.gz ]]; then
+    ext=".fastq.gz"
+  else
+    ext=".fq.gz"
+  fi
+  sample=$(basename "${r1%_1_val_1$ext}")
+  r2="$READS_DIR/${sample}_2_val_2$ext"
+
+  if [[ ! -f "$r2" ]]; then
+    echo "!! Missing mate for $sample: $r2" >&2
+    continue
+  fi
+
+  echo "==> $sample"
+  # FastQC
+  fastqc --quiet -t "$THREADS" -o "$OUT/fastqc" "$r1" "$r2"
+
+  # Kraken2 (report only)
+  kraken2 --db "$DB" --threads "$THREADS" \
+          --paired "$r1" "$r2" \
+          --report "$OUT/kraken/${sample}.report"
+done
+
+# 4) MultiQC summary
+multiqc "$OUT" -o "$OUT/multiqc"
+
+echo "Done. FastQC: $OUT/fastqc ; Kraken reports: $OUT/kraken ; MultiQC: $OUT/multiqc"
+```
