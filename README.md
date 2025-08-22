@@ -13,6 +13,12 @@ cut -f3 runs.tsv | tail -n +2 | tr ';' '\n' | while read url; do
 done
 ```
 
+### Download from file with accessions
+```
+# accessions.txt contains one run per line (e.g., ERR11895879)
+parallel -j 4 'enaDataGet -f fastq -d fastq {}' :::: accessions.txt
+```
+
 ### Get metadata
 ```
 # 1) Convert Excel to CSV (keeps your header)
