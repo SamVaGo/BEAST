@@ -13,6 +13,28 @@ cut -f3 runs.tsv | tail -n +2 | tr ';' '\n' | while read url; do
 done
 ```
 
+### Get metadata
+```
+# 1) Convert Excel to CSV (keeps your header)
+xlsx2csv -d tab Map1.xlsx Map1.tsv
+
+# 2) Pull unique BioSamples
+awk -F'\t' 'NR>1{print $2}' Map1.tsv | sort -u > biosamples.txt
+# (Assumes header is: run_accession  sample_accession  experiment_accession  study_accession)
+
+# show what you’ll loop over
+nl -ba biosamples.txt
+# normalize line endings & trim whitespace just in case
+tr -d '\r' < biosamples.txt | sed 's/[[:space:]]\+$//' | awk 'NF' > biosamples.clean.txt
+mv biosamples.clean.txt biosamples.txt
+
+printf "biosample_accession\tscientific_name\tcollection_date\tcountry\thost\tisolation_source\tfirst_public\n" > biosample_meta.tsv
+while read BS; do
+  curl -s "https://www.ebi.ac.uk/ena/portal/api/filereport?accession=${BS}&result=sample&format=tsv&fields=sample_accession,scientific_name,collection_date,country,host,isolation_source,first_public" \
+  | sed '1d' >> biosample_meta.tsv
+done < biosamples.txt``
+
+
 ### run fastqc and kraken2
 ```
 # 0) activate your tools
