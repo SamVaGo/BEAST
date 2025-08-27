@@ -124,7 +124,56 @@ done
 
 conda deactivate
 ```
+### Bracken
+```
+cd /home/britto/data/Sam/Serratia/all_raw/work1/work/kraken
 
+for file in *.report; do
+    sample=$(basename "$file" .report)
+    bracken -d /home/britto/reference_database/refseq_kraken \
+            -i "$file" \
+            -o "${sample}.bracken" \
+            -r 150 \
+            -l S
+done
+```
+
+#### combine bracken reports in R
+```
+library(readr)
+library(dplyr)
+library(purrr)
+library(stringr)
+library(tidyr)
+
+# --- set your folder here ---
+bracken_dir <- "/home/britto/data/Sam/Serratia/all_raw/work1/work/kraken"
+
+# list all .bracken files in that folder (set recursive = TRUE if they’re in subfolders)
+files <- list.files(path = bracken_dir,
+                    pattern = "\\.bracken$",
+                    full.names = TRUE,
+                    recursive = FALSE)
+
+stopifnot(length(files) > 0)  # fail early if none found
+
+# read and reshape: keep taxon name + new_est_reads, name column by sample (file stem)
+dfs <- map(files, ~ read_tsv(.x, show_col_types = FALSE) %>%
+             transmute(
+               name,
+               !!str_remove(basename(.x), "\\.bracken$") := new_est_reads
+             ))
+
+# full join across all samples; NA -> 0
+merged <- reduce(dfs, full_join, by = "name") %>%
+  mutate(across(-name, ~ replace_na(., 0)))
+
+# write output next to the inputs (or change the path if you prefer)
+out_path <- file.path(bracken_dir, "bracken_merged.tsv")
+write_tsv(merged, out_path)
+
+message("Wrote: ", out_path)
+```
 
 
 
