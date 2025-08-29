@@ -175,7 +175,27 @@ write_tsv(merged, out_path)
 message("Wrote: ", out_path)
 ```
 
+### Move selected trimmed reads
+```
+SRC="/home/britto/data/Sam/Serratia/all_raw/all"
+DEST="/home/britto/data/Sam/Serratia/all_raw/include"
+LIST="accessions.txt"
 
+mkdir -p "$DEST"
+
+while read acc; do
+  [ -z "$acc" ] && continue   # skip empty lines
+  echo "==> Moving $acc"
+  for mate in 1 2; do
+    file="$SRC/${acc}_${mate}_val_${mate}.fq.gz"
+    if [[ -f "$file" ]]; then
+      mv "$file" "$DEST/"
+    else
+      echo "   Missing: $file"
+    fi
+  done
+done < "$LIST"
+```
 
 
 
