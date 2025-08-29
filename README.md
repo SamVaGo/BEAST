@@ -200,7 +200,7 @@ done < "$LIST"
 ## Snippy
 ```
 conda activate snippy
-snippy-multi samples.tsv --ref /home/britto/data/Sam/Serratia/all_raw/db11/db11.cleaned.fna --cpus 24 > runme.sh
+snippy-multi /home/britto/data/Sam/Serratia/all_raw/samples.tsv --ref /home/britto/data/Sam/Serratia/all_raw/db11/db11.cleaned.fna --cpus 24 > runme.sh
 less runme.sh   # check the script makes sense
 sh ./runme.sh   # leave it running over lunch
 snippy-clean_full_aln core.full.aln > clean.full.aln
