@@ -19,7 +19,6 @@ done
 parallel -j 4 '/home/britto/tools/enaBrowserTools-1.7.1/python3/enaDataGet -f fastq -d fastq {}' :::: /home/britto/data/Sam/Serratia/all_raw/accessions.txt```
 
 ### Get metadata
-```
 # 1) Convert Excel to CSV (keeps your header)
 xlsx2csv -d tab Map1.xlsx Map1.tsv
 
