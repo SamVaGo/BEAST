@@ -16,8 +16,7 @@ done
 ### Download from file with accessions
 ```
 # accessions.txt contains one run per line (e.g., ERR11895879)
-parallel -j 4 'enaDataGet -f fastq -d fastq {}' :::: accessions.txt
-```
+parallel -j 4 '/home/britto/tools/enaBrowserTools-1.7.1/python3/enaDataGet -f fastq -d fastq {}' :::: /home/britto/data/Sam/Serratia/all_raw/accessions.txt```
 
 ### Get metadata
 ```
