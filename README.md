@@ -208,7 +208,7 @@ conda deactivate
 ### qc with snippy bam_files
 ```
 # ====== CONFIG ======
-BASE="/home/britto/data/Sam/Serratia/all_raw/snippy"   # parent containing <STRAIN>/snps.bam
+BASE="/home/britto/data/Sam/Serratia/all_raw/additional/snippy"   # parent containing <STRAIN>/snps.bam
 OUT="snippy_coverage_qc.tsv"                            # output TSV in current working dir
 
 # QC thresholds for optional flagging
